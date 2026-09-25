@@ -19,7 +19,7 @@ if journal_account == "Personal / Old Journal":
     DATA_FILE = "trades.csv" 
 elif journal_account == "50Cr Prop Firm Account":
     DATA_FILE = "trades_50cr.csv"
-elif journal_account == "GBPCAD TEST":
+elif journal_account == "GBPCAD Test":
     DATA_FILE = "trades_gbpcad.csv"
 
 # டேட்டாவை லோட் செய்யும் ஃபங்க்ஷன்

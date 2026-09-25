@@ -11,7 +11,7 @@ st.sidebar.header("📁 Journal Selection")
 journal_account = st.sidebar.selectbox("Select Account", [
     "Personal / Old Journal", 
     "50Cr Prop Firm Account",
-    "GBPCAD TEST"
+    "GBPCAD TEST",
     "GBPNZD TEST"
     
 ])

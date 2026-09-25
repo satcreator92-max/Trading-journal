@@ -11,7 +11,9 @@ st.sidebar.header("📁 Journal Selection")
 journal_account = st.sidebar.selectbox("Select Account", [
     "Personal / Old Journal", 
     "50Cr Prop Firm Account",
-    "New Strategy Test" 
+    "GBPCAD TEST"
+    "GBPNZD TEST"
+    
 ])
 
 # தேர்ந்தெடுக்கப்பட்ட கணக்கிற்கு ஏற்ப டேட்டா ஃபைல் மாறும்

@@ -11,9 +11,7 @@ st.sidebar.header("📁 Journal Selection")
 journal_account = st.sidebar.selectbox("Select Account", [
     "Personal / Old Journal", 
     "50Cr Prop Firm Account",
-    "GBPCAD TEST",
-    "GBPNZD TEST"
-    
+    "New Strategy Test" 
 ])
 
 # தேர்ந்தெடுக்கப்பட்ட கணக்கிற்கு ஏற்ப டேட்டா ஃபைல் மாறும்
@@ -21,8 +19,8 @@ if journal_account == "Personal / Old Journal":
     DATA_FILE = "trades.csv" 
 elif journal_account == "50Cr Prop Firm Account":
     DATA_FILE = "trades_50cr.csv"
-elif journal_account == "New Strategy Test":
-    DATA_FILE = "trades_new_strategy.csv"
+elif journal_account == "GBPCAD TEST":
+    DATA_FILE = "trades_gbpcad.csv"
 
 # டேட்டாவை லோட் செய்யும் ஃபங்க்ஷன்
 def load_data(file_name):

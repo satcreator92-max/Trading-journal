@@ -7,14 +7,12 @@ st.set_page_config(page_title="CEO Trading Journal", layout="wide")
 # ----------------- Account Selection -----------------
 st.sidebar.header("📁 Journal Selection")
 
-# Puthikya 3 account-kal
 journal_account = st.sidebar.selectbox("Select Account", [
     "50Cr Prop Firm Account",
     "GBPCAD Test",
     "GBPNZD Test" 
 ])
 
-# Oru account-num thani thani CSV files
 if journal_account == "50Cr Prop Firm Account":
     DATA_FILE = "trades_50cr.csv"
 elif journal_account == "GBPCAD Test":
@@ -28,7 +26,8 @@ def load_data(file_name):
         df['Date'] = pd.to_datetime(df['Date']) 
         return df
     else:
-        return pd.DataFrame(columns=["Date", "Pair", "Direction", "Session", "Strategy", "News_Category", "Entry_Price", "Exit_Price", "PnL"])
+        # புதிதாக Outcome மற்றும் Chart_Link சேர்க்கப்பட்டுள்ளது
+        return pd.DataFrame(columns=["Date", "Pair", "Direction", "Session", "Strategy", "News_Category", "Entry_Price", "Exit_Price", "PnL", "Outcome", "Chart_Link"])
 
 df = load_data(DATA_FILE)
 
@@ -55,6 +54,11 @@ entry_price = st.sidebar.number_input("Entry Price", format="%.5f")
 exit_price = st.sidebar.number_input("Exit Price", format="%.5f")
 pnl = st.sidebar.number_input("Profit / Loss ($)", format="%.2f")
 
+# --- புதிதாக சேர்க்கப்பட்ட ஆப்ஷன்கள் ---
+outcome = st.sidebar.selectbox("Trade Outcome", ["Hit TP", "Hit SL", "Breakeven", "Manual Close"])
+chart_link = st.sidebar.text_input("Chart Link (TradingView URL)")
+# -------------------------------------
+
 if st.sidebar.button("Save Trade"):
     if pair:
         new_trade = pd.DataFrame([{
@@ -66,7 +70,9 @@ if st.sidebar.button("Save Trade"):
             "News_Category": news_category,
             "Entry_Price": entry_price,
             "Exit_Price": exit_price,
-            "PnL": pnl
+            "PnL": pnl,
+            "Outcome": outcome,
+            "Chart_Link": chart_link
         }])
         
         df = pd.concat([df, new_trade], ignore_index=True)
@@ -97,7 +103,15 @@ if not df.empty:
         col3.metric("Net PnL", f"${net_pnl:.2f}")
         
         st.write("### Trade History")
-        st.dataframe(df, use_container_width=True)
+        
+        # ட்ரேடிங்வியூ லிங்கை கிளிக் செய்யக்கூடிய URL-ஆக மாற்றும் கோட்
+        st.dataframe(
+            df, 
+            use_container_width=True,
+            column_config={
+                "Chart_Link": st.column_config.LinkColumn("Chart Link")
+            }
+        )
         
     with tab2:
         st.subheader("News Impact Analysis")

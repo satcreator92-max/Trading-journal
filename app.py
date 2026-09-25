@@ -6,13 +6,21 @@ st.set_page_config(page_title="CEO Trading Journal", layout="wide")
 
 # ----------------- அக்கவுண்ட் தேர்வு (Account Selection) -----------------
 st.sidebar.header("📁 Journal Selection")
-journal_account = st.sidebar.selectbox("Select Account", ["Personal / Old Journal", "50Cr Prop Firm Account"])
+
+# 3 தனித்தனி கணக்குகள் இங்கே கொடுக்கப்பட்டுள்ளன
+journal_account = st.sidebar.selectbox("Select Account", [
+    "Personal / Old Journal", 
+    "50Cr Prop Firm Account",
+    "New Strategy Test" 
+])
 
 # தேர்ந்தெடுக்கப்பட்ட கணக்கிற்கு ஏற்ப டேட்டா ஃபைல் மாறும்
 if journal_account == "Personal / Old Journal":
-    DATA_FILE = "trades.csv" # பழைய டேட்டா இதில் பாதுகாப்பாக இருக்கும்
-else:
-    DATA_FILE = "trades_50cr.csv" # புதிய ஜர்னல் டேட்டா இதில் சேவ் ஆகும்
+    DATA_FILE = "trades.csv" 
+elif journal_account == "50Cr Prop Firm Account":
+    DATA_FILE = "trades_50cr.csv"
+elif journal_account == "New Strategy Test":
+    DATA_FILE = "trades_new_strategy.csv"
 
 # டேட்டாவை லோட் செய்யும் ஃபங்க்ஷன்
 def load_data(file_name):
@@ -68,6 +76,14 @@ if st.sidebar.button("Save Trade"):
         st.rerun()
     else:
         st.sidebar.error("Please enter a Pair name.")
+
+# பழைய டேட்டாவை அழிப்பதற்கான ஆப்ஷன் (Clear Data)
+st.sidebar.divider()
+if st.sidebar.button("🗑️ Clear Data for this Account"):
+    if os.path.exists(DATA_FILE):
+        os.remove(DATA_FILE)
+    st.sidebar.success(f"All data deleted for {journal_account}!")
+    st.rerun()
 
 # ----------------- மல்டி-டேஷ்போர்டு (Multi-Dashboards) -----------------
 if not df.empty:

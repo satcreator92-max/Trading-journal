@@ -4,29 +4,24 @@ import os
 
 st.set_page_config(page_title="CEO Trading Journal", layout="wide")
 
-# ----------------- அக்கவுண்ட் தேர்வு (Account Selection) -----------------
+# ----------------- Account Selection -----------------
 st.sidebar.header("📁 Journal Selection")
 
-# 3 தனித்தனி கணக்குகள் இங்கே கொடுக்கப்பட்டுள்ளன
+# Puthikya 3 account-kal
 journal_account = st.sidebar.selectbox("Select Account", [
-    "Personal / Old Journal", 
     "50Cr Prop Firm Account",
     "GBPCAD Test",
-    "GBPNZD Test"
-    
+    "GBPNZD Test" 
 ])
 
-# தேர்ந்தெடுக்கப்பட்ட கணக்கிற்கு ஏற்ப டேட்டா ஃபைல் மாறும்
-if journal_account == "Personal / Old Journal":
-    DATA_FILE = "trades.csv" 
-elif journal_account == "50Cr Prop Firm Account":
+# Oru account-num thani thani CSV files
+if journal_account == "50Cr Prop Firm Account":
     DATA_FILE = "trades_50cr.csv"
 elif journal_account == "GBPCAD Test":
-    DATA_FILE = "trades_gbpcad.csv"
+    DATA_FILE = "trades_gbpcad_test.csv"
 elif journal_account == "GBPNZD Test":
-    DATA_FILE = "trades_gbpnzd.csv"
+    DATA_FILE = "trades_gbpnzd_test.csv"
 
-# டேட்டாவை லோட் செய்யும் ஃபங்க்ஷன்
 def load_data(file_name):
     if os.path.exists(file_name):
         df = pd.read_csv(file_name)
@@ -39,7 +34,7 @@ df = load_data(DATA_FILE)
 
 st.title(f"📈 CEO Dashboard: {journal_account}")
 
-# ----------------- புதிய ட்ரேட் சேர்க்க (Add New Trade) -----------------
+# ----------------- Add New Trade -----------------
 st.sidebar.header("Add New Trade")
 trade_date = st.sidebar.date_input("Trade Date")
 pair = st.sidebar.text_input("Pair (e.g., GBPCAD, EURNZD)")
@@ -81,15 +76,7 @@ if st.sidebar.button("Save Trade"):
     else:
         st.sidebar.error("Please enter a Pair name.")
 
-# பழைய டேட்டாவை அழிப்பதற்கான ஆப்ஷன் (Clear Data)
-st.sidebar.divider()
-if st.sidebar.button("🗑️ Clear Data for this Account"):
-    if os.path.exists(DATA_FILE):
-        os.remove(DATA_FILE)
-    st.sidebar.success(f"All data deleted for {journal_account}!")
-    st.rerun()
-
-# ----------------- மல்டி-டேஷ்போர்டு (Multi-Dashboards) -----------------
+# ----------------- Multi-Dashboards -----------------
 if not df.empty:
     tab1, tab2, tab3, tab4 = st.tabs([
         "📊 Main Overview", 

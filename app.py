@@ -26,38 +26,52 @@ def load_data(file_name):
         df['Date'] = pd.to_datetime(df['Date']) 
         return df
     else:
-        # புதிதாக Outcome மற்றும் Chart_Link சேர்க்கப்பட்டுள்ளது
-        return pd.DataFrame(columns=["Date", "Pair", "Direction", "Session", "Strategy", "News_Category", "Entry_Price", "Exit_Price", "PnL", "Outcome", "Chart_Link"])
+        # Puthiya columns add panniyachu (Checklist, Zone Type, Psychology, After Trade Chart)
+        return pd.DataFrame(columns=[
+            "Date", "Pair", "Direction", "Session", "News_Category", 
+            "Zone_Type", "Weekly_Setup", "1H_SMT", "5m_CISD", 
+            "Entry_Price", "Exit_Price", "PnL", "Outcome", "Psychology", "After_Chart_Link"
+        ])
 
 df = load_data(DATA_FILE)
 
 st.title(f"📈 CEO Dashboard: {journal_account}")
 
 # ----------------- Add New Trade -----------------
-st.sidebar.header("Add New Trade")
+st.sidebar.header("📝 Add New Trade")
 trade_date = st.sidebar.date_input("Trade Date")
-pair = st.sidebar.text_input("Pair (e.g., GBPCAD, EURNZD)")
+pair = st.sidebar.text_input("Pair (e.g., GBPUSD, GBPCAD)")
 direction = st.sidebar.selectbox("Direction", ["Long", "Short"])
 session = st.sidebar.selectbox("Session", ["Asian", "London", "New York", "Frankfurt"])
-strategy = st.sidebar.selectbox("Strategy Setup", ["4H BoS + OB", "4H BoS + FVG", "Liquidity Sweep"])
+
+# 4H BoS mandatory, so FVG or OB mattum select panna pothum
+zone_type = st.sidebar.selectbox("4H Entry Zone (After BoS)", ["4H FVG", "4H Order Block (OB)"])
 
 news_category = st.sidebar.selectbox("News Category", [
-    "None (No News)", 
-    "CPI / Inflation", 
-    "NFP / Employment", 
-    "FOMC / Interest Rates", 
-    "GDP / Retail Sales",
-    "Other High Impact"
+    "None (No News)", "CPI / Inflation", "NFP / Employment", "FOMC / Interest Rates", "GDP / Retail Sales", "Other High Impact"
 ])
+
+st.sidebar.markdown("### ✅ Strategy Checklist")
+chk_weekly = st.sidebar.checkbox("Weekly Sweep / Strong Break")
+chk_smt = st.sidebar.checkbox("1H SMT Divergence Created")
+chk_cisd = st.sidebar.checkbox("5m CISD Proper Close")
 
 entry_price = st.sidebar.number_input("Entry Price", format="%.5f")
 exit_price = st.sidebar.number_input("Exit Price", format="%.5f")
 pnl = st.sidebar.number_input("Profit / Loss ($)", format="%.2f")
 
-# --- புதிதாக சேர்க்கப்பட்ட ஆப்ஷன்கள் ---
-outcome = st.sidebar.selectbox("Trade Outcome", ["Hit TP", "Hit SL", "Breakeven", "Manual Close"])
-chart_link = st.sidebar.text_input("Chart Link (TradingView URL)")
-# -------------------------------------
+# Trade Outcome & Psychology
+outcome = st.sidebar.selectbox("Trade Outcome", ["Hit TP (1:2)", "Hit SL", "Breakeven", "Manual Close"])
+psychology = st.sidebar.selectbox("Trade Psychology", [
+    "Followed Perfect Plan", 
+    "FOMO Entry (Avasarappatten)", 
+    "Revenge Trade", 
+    "Closed Early (Payanthutten)",
+    "Hesitated / Late Entry"
+])
+
+# After Finish Trade Screenshot
+after_chart_link = st.sidebar.text_input("After Trade Screenshot (Link)")
 
 if st.sidebar.button("Save Trade"):
     if pair:
@@ -66,13 +80,17 @@ if st.sidebar.button("Save Trade"):
             "Pair": pair.upper(),
             "Direction": direction,
             "Session": session,
-            "Strategy": strategy,
             "News_Category": news_category,
+            "Zone_Type": zone_type,
+            "Weekly_Setup": chk_weekly,
+            "1H_SMT": chk_smt,
+            "5m_CISD": chk_cisd,
             "Entry_Price": entry_price,
             "Exit_Price": exit_price,
             "PnL": pnl,
             "Outcome": outcome,
-            "Chart_Link": chart_link
+            "Psychology": psychology,
+            "After_Chart_Link": after_chart_link
         }])
         
         df = pd.concat([df, new_trade], ignore_index=True)
@@ -84,11 +102,10 @@ if st.sidebar.button("Save Trade"):
 
 # ----------------- Multi-Dashboards -----------------
 if not df.empty:
-    tab1, tab2, tab3, tab4 = st.tabs([
+    tab1, tab2, tab3 = st.tabs([
         "📊 Main Overview", 
-        "📰 News & Strategy", 
-        "📅 Seasonality", 
-        "🌍 Pair & Session Mastery"
+        "🧠 Psychology & Strategy", 
+        "📅 Advanced Analytics"
     ])
     
     with tab1:
@@ -103,35 +120,32 @@ if not df.empty:
         col3.metric("Net PnL", f"${net_pnl:.2f}")
         
         st.write("### Trade History")
-        
-        # ட்ரேடிங்வியூ லிங்கை கிளிக் செய்யக்கூடிய URL-ஆக மாற்றும் கோட்
+        # Link ah clickable ah matha
         st.dataframe(
             df, 
             use_container_width=True,
             column_config={
-                "Chart_Link": st.column_config.LinkColumn("Chart Link")
+                "After_Chart_Link": st.column_config.LinkColumn("After Trade Chart")
             }
         )
         
     with tab2:
-        st.subheader("News Impact Analysis")
-        news_pnl = df.groupby("News_Category")["PnL"].sum().reset_index()
-        st.bar_chart(news_pnl.set_index("News_Category"))
-        
-        st.subheader("Strategy Performance")
-        strat_pnl = df.groupby("Strategy")["PnL"].sum().reset_index()
-        st.bar_chart(strat_pnl.set_index("Strategy"))
+        col1, col2 = st.columns(2)
+        with col1:
+            st.subheader("Trade Psychology")
+            psy_count = df["Psychology"].value_counts().reset_index()
+            psy_count.columns = ["Psychology", "Count"]
+            st.bar_chart(psy_count.set_index("Psychology"))
+            
+        with col2:
+            st.subheader("Zone Performance (FVG vs OB)")
+            zone_pnl = df.groupby("Zone_Type")["PnL"].sum().reset_index()
+            st.bar_chart(zone_pnl.set_index("Zone_Type"))
         
     with tab3:
-        st.subheader("Monthly Seasonality")
-        df['Month'] = df['Date'].dt.month_name()
-        month_pnl = df.groupby("Month")["PnL"].sum().reset_index()
-        st.bar_chart(month_pnl.set_index("Month"))
-        
-    with tab4:
         st.subheader("Pair vs Session Analytics")
         session_pair = df.groupby(["Session", "Pair"])["PnL"].sum().unstack().fillna(0)
         st.dataframe(session_pair, use_container_width=True)
 
 else:
-    st.info(f"No trades recorded yet in {journal_account}. Start adding your trades!")
+    st.info(f"No trades recorded yet in {journal_account}. Start tracking your CEO setup!")

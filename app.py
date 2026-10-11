@@ -5,7 +5,6 @@ import datetime
 
 st.set_page_config(page_title="CEO Trading Journal", layout="wide")
 
-# இமேஜ்களை சேமிக்க 'screenshots' Folder
 if not os.path.exists("screenshots"):
     os.makedirs("screenshots")
 
@@ -31,10 +30,10 @@ def load_data(file_name):
         df['Date'] = pd.to_datetime(df['Date']) 
         return df
     else:
-        # புதிய Dynamic SMC காலங்கள் சேர்க்கப்பட்டுள்ளன
+        # Weekly மற்றும் Daily தனித்தனியாகப் பிரிக்கப்பட்டுள்ளது
         return pd.DataFrame(columns=[
             "Date", "Pair", "Direction", "Session", "News_Category", 
-            "HTF_Bias", "Liquidity_Swept", "Setup_Trigger", "Setup_Grade", "Trade_Thesis",
+            "Weekly_Bias", "Daily_Bias", "Liquidity_Swept", "Setup_Trigger", "Setup_Grade", "Trade_Thesis",
             "Entry_Price", "Exit_Price", "PnL", "Outcome", "Psychology", "Screenshot_Path"
         ])
 
@@ -53,7 +52,10 @@ with st.sidebar.expander("📌 1. Basic Trade Info", expanded=True):
     news_category = st.selectbox("News Category", ["None", "CPI / Inflation", "NFP / Employment", "FOMC", "High Impact"])
 
 with st.sidebar.expander("🧠 2. CEO SMC Logic (Context)", expanded=True):
-    htf_bias = st.selectbox("HTF Bias (Weekly/Daily)", ["Bullish", "Bearish", "Neutral / Ranging"])
+    # Weekly மற்றும் Daily Bias தனித்தனி Dropdown ஆக மாற்றப்பட்டுள்ளது
+    weekly_bias = st.selectbox("Weekly Bias", ["Bullish", "Bearish", "Neutral / Ranging"])
+    daily_bias = st.selectbox("Daily Bias", ["Bullish", "Bearish", "Neutral / Ranging"])
+    
     liquidity_swept = st.selectbox("Liquidity Swept", [
         "Previous Day High / Low", 
         "Previous Week High / Low", 
@@ -72,7 +74,7 @@ with st.sidebar.expander("🧠 2. CEO SMC Logic (Context)", expanded=True):
         "A Setup (Dynamic Liquidity + 4H Zone)", 
         "B Setup (Lower TF Confluence Only)"
     ])
-    trade_thesis = st.text_area("Trade Thesis (Your Logic)", placeholder="Example: Monday candle was bullish but I viewed it as liquidity for the 4H Zone. Saw 1H SMT and entered on 5m CISD...")
+    trade_thesis = st.text_area("Trade Thesis (Your Logic)", placeholder="Example: Weekly was Bearish, but Monday Daily candle was Bullish. I used Daily as liquidity for the 4H Zone...")
 
 with st.sidebar.expander("💰 3. Trade Results & Psychology", expanded=True):
     entry_price = st.number_input("Entry Price", format="%.5f")
@@ -106,7 +108,8 @@ if st.sidebar.button("💾 Save Trade", use_container_width=True):
             "Direction": direction,
             "Session": session,
             "News_Category": news_category,
-            "HTF_Bias": htf_bias,
+            "Weekly_Bias": weekly_bias,
+            "Daily_Bias": daily_bias,
             "Liquidity_Swept": liquidity_swept,
             "Setup_Trigger": setup_trigger,
             "Setup_Grade": setup_grade,
@@ -183,7 +186,8 @@ if not df.empty:
                     format_func=lambda x: trade_options[x]
                 )
                 
-                # Trade Thesis-ஐ இமேஜுக்கு மேலே காட்டுவது
+                # Update Trade Thesis Display
+                st.markdown(f"**📅 Timeframe Bias:** Weekly ({trades_with_images.loc[selected_trade_idx, 'Weekly_Bias']}) | Daily ({trades_with_images.loc[selected_trade_idx, 'Daily_Bias']})")
                 st.markdown(f"**🧠 Trade Thesis:** {trades_with_images.loc[selected_trade_idx, 'Trade_Thesis']}")
                 st.markdown(f"**🎯 Setup Grade:** {trades_with_images.loc[selected_trade_idx, 'Setup_Grade']}")
                 

@@ -28,13 +28,19 @@ def load_data(file_name):
     if os.path.exists(file_name):
         df = pd.read_csv(file_name)
         df['Date'] = pd.to_datetime(df['Date']) 
+        
+        # Pazhaya data disturb aavathe puthiya columns add cheyyunnu
+        for i in range(2, 8):
+            col_name = f"Screenshot_{i}"
+            if col_name not in df.columns:
+                df[col_name] = ""
         return df
     else:
-        # Weekly மற்றும் Daily தனித்தனியாகப் பிரிக்கப்பட்டுள்ளது
         return pd.DataFrame(columns=[
             "Date", "Pair", "Direction", "Session", "News_Category", 
             "Weekly_Bias", "Daily_Bias", "Liquidity_Swept", "Setup_Trigger", "Setup_Grade", "Trade_Thesis",
-            "Entry_Price", "Exit_Price", "PnL", "Outcome", "Psychology", "Screenshot_Path"
+            "Entry_Price", "Exit_Price", "PnL", "Outcome", "Psychology", 
+            "Screenshot_Path", "Screenshot_2", "Screenshot_3", "Screenshot_4", "Screenshot_5", "Screenshot_6", "Screenshot_7"
         ])
 
 df = load_data(DATA_FILE)
@@ -52,76 +58,46 @@ with st.sidebar.expander("📌 1. Basic Trade Info", expanded=True):
     news_category = st.selectbox("News Category", ["None", "CPI / Inflation", "NFP / Employment", "FOMC", "High Impact"])
 
 with st.sidebar.expander("🧠 2. CEO SMC Logic (Context)", expanded=True):
-    # Weekly மற்றும் Daily Bias தனித்தனி Dropdown ஆக மாற்றப்பட்டுள்ளது
     weekly_bias = st.selectbox("Weekly Bias", ["Bullish", "Bearish", "Neutral / Ranging"])
     daily_bias = st.selectbox("Daily Bias", ["Bullish", "Bearish", "Neutral / Ranging"])
-    
-    liquidity_swept = st.selectbox("Liquidity Swept", [
-        "Previous Day High / Low", 
-        "Previous Week High / Low", 
-        "Asian Session High / Low", 
-        "Trendline / Structural Liquidity",
-        "None"
-    ])
-    setup_trigger = st.selectbox("Setup Trigger", [
-        "Sweep + 4H Zone + SMT", 
-        "Continuation / Trend Follow", 
-        "SMT at Key Level",
-        "Other"
-    ])
-    setup_grade = st.radio("Setup Grade", [
-        "A+ Setup (All Timeframes Aligned)", 
-        "A Setup (Dynamic Liquidity + 4H Zone)", 
-        "B Setup (Lower TF Confluence Only)"
-    ])
-    trade_thesis = st.text_area("Trade Thesis (Your Logic)", placeholder="Example: Weekly was Bearish, but Monday Daily candle was Bullish. I used Daily as liquidity for the 4H Zone...")
+    liquidity_swept = st.selectbox("Liquidity Swept", ["Previous Day High / Low", "Previous Week High / Low", "Asian Session High / Low", "Trendline / Structural Liquidity", "None"])
+    setup_trigger = st.selectbox("Setup Trigger", ["Sweep + 4H Zone + SMT", "Continuation / Trend Follow", "SMT at Key Level", "Other"])
+    setup_grade = st.radio("Setup Grade", ["A+ Setup (All Timeframes Aligned)", "A Setup (Dynamic Liquidity + 4H Zone)", "B Setup (Lower TF Confluence Only)"])
+    trade_thesis = st.text_area("Trade Thesis (Your Logic)")
 
 with st.sidebar.expander("💰 3. Trade Results & Psychology", expanded=True):
     entry_price = st.number_input("Entry Price", format="%.5f")
     exit_price = st.number_input("Exit Price", format="%.5f")
     pnl = st.number_input("Profit / Loss ($)", format="%.2f")
     outcome = st.selectbox("Trade Outcome", ["Hit TP (1:2)", "Hit SL", "Breakeven", "Manual Close"])
-    psychology = st.selectbox("Trade Psychology", [
-        "Followed Perfect Plan", 
-        "FOMO Entry (Avasarappatten)", 
-        "Revenge Trade", 
-        "Closed Early (Payanthutten)",
-        "Hesitated / Late Entry"
-    ])
+    psychology = st.selectbox("Trade Psychology", ["Followed Perfect Plan", "FOMO Entry (Avasarappatten)", "Revenge Trade", "Closed Early (Payanthutten)", "Hesitated / Late Entry"])
 
-with st.sidebar.expander("🖼️ 4. Chart Screenshot", expanded=True):
-    uploaded_image = st.file_uploader("Upload After Trade Screenshot", type=["png", "jpg", "jpeg"])
+with st.sidebar.expander("🖼️ 4. Chart Screenshots (Up to 7)", expanded=True):
+    uploaded_images = st.file_uploader("Upload Screenshots", type=["png", "jpg", "jpeg"], accept_multiple_files=True)
 
 if st.sidebar.button("💾 Save Trade", use_container_width=True):
     if pair:
-        screenshot_path = ""
-        if uploaded_image is not None:
-            timestamp = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
-            image_name = f"{pair.upper()}_{timestamp}.png"
-            screenshot_path = os.path.join("screenshots", image_name)
-            with open(screenshot_path, "wb") as f:
-                f.write(uploaded_image.getbuffer())
+        img_paths = ["", "", "", "", "", "", ""]
+        if uploaded_images:
+            for i, img in enumerate(uploaded_images[:7]):
+                timestamp = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
+                image_name = f"{pair.upper()}_{timestamp}_{i+1}.png"
+                path = os.path.join("screenshots", image_name)
+                with open(path, "wb") as f:
+                    f.write(img.getbuffer())
+                img_paths[i] = path
 
-        new_trade = pd.DataFrame([{
-            "Date": pd.to_datetime(trade_date),
-            "Pair": pair.upper(),
-            "Direction": direction,
-            "Session": session,
-            "News_Category": news_category,
-            "Weekly_Bias": weekly_bias,
-            "Daily_Bias": daily_bias,
-            "Liquidity_Swept": liquidity_swept,
-            "Setup_Trigger": setup_trigger,
-            "Setup_Grade": setup_grade,
-            "Trade_Thesis": trade_thesis,
-            "Entry_Price": entry_price,
-            "Exit_Price": exit_price,
-            "PnL": pnl,
-            "Outcome": outcome,
-            "Psychology": psychology,
-            "Screenshot_Path": screenshot_path
-        }])
+        new_trade_dict = {
+            "Date": pd.to_datetime(trade_date), "Pair": pair.upper(), "Direction": direction,
+            "Session": session, "News_Category": news_category, "Weekly_Bias": weekly_bias,
+            "Daily_Bias": daily_bias, "Liquidity_Swept": liquidity_swept, "Setup_Trigger": setup_trigger,
+            "Setup_Grade": setup_grade, "Trade_Thesis": trade_thesis, "Entry_Price": entry_price,
+            "Exit_Price": exit_price, "PnL": pnl, "Outcome": outcome, "Psychology": psychology,
+            "Screenshot_Path": img_paths[0], "Screenshot_2": img_paths[1], "Screenshot_3": img_paths[2],
+            "Screenshot_4": img_paths[3], "Screenshot_5": img_paths[4], "Screenshot_6": img_paths[5], "Screenshot_7": img_paths[6]
+        }
         
+        new_trade = pd.DataFrame([new_trade_dict])
         df = pd.concat([df, new_trade], ignore_index=True)
         df.to_csv(DATA_FILE, index=False)
         st.sidebar.success(f"Trade Added to {journal_account}!")
@@ -131,74 +107,27 @@ if st.sidebar.button("💾 Save Trade", use_container_width=True):
 
 # ----------------- Multi-Dashboards -----------------
 if not df.empty:
-    tab1, tab2, tab3, tab4 = st.tabs([
-        "📊 Main Overview", 
-        "🧠 Strategy & Psychology", 
-        "📅 Advanced Analytics",
-        "🖼️ Trade Gallery"
-    ])
+    tab1, tab2, tab3, tab4 = st.tabs(["📊 Main Overview", "🧠 Strategy & Psychology", "📅 Advanced Analytics", "🖼️ Trade Gallery"])
     
     with tab1:
         st.subheader("Performance Overview")
-        total_trades = len(df)
-        win_rate = (len(df[df["PnL"] > 0]) / total_trades) * 100 if total_trades > 0 else 0
-        net_pnl = df["PnL"].sum()
-        
-        col1, col2, col3 = st.columns(3)
-        col1.metric("Total Trades", total_trades)
-        col2.metric("Win Rate", f"{win_rate:.1f}%")
-        col3.metric("Net PnL", f"${net_pnl:.2f}")
-        
-        st.write("### Trade History")
-        display_df = df.drop(columns=["Screenshot_Path", "Trade_Thesis"]) if "Screenshot_Path" in df.columns else df
+        display_df = df.drop(columns=["Screenshot_Path", "Screenshot_2", "Screenshot_3", "Screenshot_4", "Screenshot_5", "Screenshot_6", "Screenshot_7", "Trade_Thesis"], errors='ignore')
         st.dataframe(display_df, use_container_width=True)
-        
-    with tab2:
-        col1, col2 = st.columns(2)
-        with col1:
-            st.subheader("Trade Psychology")
-            psy_count = df["Psychology"].value_counts().reset_index()
-            psy_count.columns = ["Psychology", "Count"]
-            st.bar_chart(psy_count.set_index("Psychology"))
-            
-        with col2:
-            st.subheader("Setup Grade Performance")
-            if "Setup_Grade" in df.columns:
-                grade_pnl = df.groupby("Setup_Grade")["PnL"].sum().reset_index()
-                st.bar_chart(grade_pnl.set_index("Setup_Grade"))
-        
-    with tab3:
-        st.subheader("Pair vs Session Analytics")
-        session_pair = df.groupby(["Session", "Pair"])["PnL"].sum().unstack().fillna(0)
-        st.dataframe(session_pair, use_container_width=True)
         
     with tab4:
         st.subheader("🖼️ Review Trade Screenshots & Thesis")
         if "Screenshot_Path" in df.columns:
-            trades_with_images = df[df["Screenshot_Path"].notna() & (df["Screenshot_Path"] != "")]
+            trades_with_data = df.copy()
+            trade_options = trades_with_data["Date"].dt.strftime('%Y-%m-%d').astype(str) + " | " + trades_with_data["Pair"] + " | " + trades_with_data["Outcome"]
             
-            if not trades_with_images.empty:
-                trade_options = trades_with_images["Date"].dt.strftime('%Y-%m-%d').astype(str) + " | " + trades_with_images["Pair"] + " | " + trades_with_images["Outcome"]
-                
-                selected_trade_idx = st.selectbox(
-                    "Select a Trade to View Details:", 
-                    trades_with_images.index, 
-                    format_func=lambda x: trade_options[x]
-                )
-                
-                # Update Trade Thesis Display
-                st.markdown(f"**📅 Timeframe Bias:** Weekly ({trades_with_images.loc[selected_trade_idx, 'Weekly_Bias']}) | Daily ({trades_with_images.loc[selected_trade_idx, 'Daily_Bias']})")
-                st.markdown(f"**🧠 Trade Thesis:** {trades_with_images.loc[selected_trade_idx, 'Trade_Thesis']}")
-                st.markdown(f"**🎯 Setup Grade:** {trades_with_images.loc[selected_trade_idx, 'Setup_Grade']}")
-                
-                img_path = trades_with_images.loc[selected_trade_idx, "Screenshot_Path"]
-                if os.path.exists(img_path):
-                    st.image(img_path, caption=trade_options[selected_trade_idx], use_container_width=True)
-                else:
-                    st.error("Image file not found!")
-            else:
-                st.info("No screenshots uploaded yet.")
-        else:
-            st.info("No screenshots available.")
-else:
-    st.info(f"No trades recorded yet in {journal_account}. Start tracking your CEO setup!")
+            selected_idx = st.selectbox("Select a Trade to View Details:", trades_with_data.index, format_func=lambda x: trade_options[x])
+            
+            st.markdown(f"**🧠 Trade Thesis:** {trades_with_data.loc[selected_idx, 'Trade_Thesis']}")
+            st.markdown(f"**🎯 Setup Grade:** {trades_with_data.loc[selected_idx, 'Setup_Grade']}")
+            
+            img_cols = ["Screenshot_Path", "Screenshot_2", "Screenshot_3", "Screenshot_4", "Screenshot_5", "Screenshot_6", "Screenshot_7"]
+            for col in img_cols:
+                if col in trades_with_data.columns:
+                    img_path = trades_with_data.loc[selected_idx, col]
+                    if pd.notna(img_path) and str(img_path).strip() != "" and os.path.exists(str(img_path)):
+                        st.image(str(img_path), use_container_width=True)
